@@ -45,7 +45,7 @@ class MOMessageConsumerControllerTest {
     @Test
     void testServiceProduceXmlMessage() throws Exception {
 
-        given(service.getXmlMessage()).willReturn(new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK));
+        given(service.getXmlMessage("rabbitmq")).willReturn(new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK));
 
         MvcResult result = mvc.perform(get("/macy/consumer/xml")
                         .contentType(MediaType.APPLICATION_XML_VALUE)
@@ -59,7 +59,7 @@ class MOMessageConsumerControllerTest {
     @Test
     void testServiceProduceJsonMessage() throws Exception {
 
-        given(service.getJsonMessage()).willReturn(new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK));
+        given(service.getJsonMessage("gcp")).willReturn(new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK));
 
         MvcResult result = mvc.perform(get("/macy/consumer/json")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)

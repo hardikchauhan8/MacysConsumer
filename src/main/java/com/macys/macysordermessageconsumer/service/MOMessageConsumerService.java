@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 public interface MOMessageConsumerService {
-    ResponseEntity<List<FulfillmentOrder>> getXmlMessage();
+    ResponseEntity<List<FulfillmentOrder>> getXmlMessage(String queue);
 
-    ResponseEntity<List<OrderMessageJson>> getJsonMessage();
+    ResponseEntity<List<OrderMessageJson>> getJsonMessage(String queue);
 }

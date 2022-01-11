@@ -12,6 +12,9 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+  cloud:
+    gcp:
+      project-id: firstcoloudpubsu-1641885915064
 
 spring.rabbitmq:
   host: localhost
