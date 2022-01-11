@@ -1,0 +1,20 @@
+server:
+  port: 9012
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/macys-usecase
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root
+  jpa:
+    hibernate.ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+spring.rabbitmq:
+  host: localhost
+  port: 5672
+  username: guest
+  password: guest
