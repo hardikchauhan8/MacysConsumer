@@ -2,10 +2,6 @@ package com.macys.macysordermessageconsumer.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.google.cloud.pubsub.v1.AckReplyConsumer;
-import com.google.cloud.pubsub.v1.MessageReceiver;
-import com.google.cloud.pubsub.v1.Subscriber;
-import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.macys.macysordermessageconsumer.dto.json.OrderMessageJson;
 import com.macys.macysordermessageconsumer.dto.xml.FulfillmentOrder;
@@ -31,8 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 @Service
 public class MOMessageConsumerServiceImpl implements MOMessageConsumerService {
@@ -86,27 +80,16 @@ public class MOMessageConsumerServiceImpl implements MOMessageConsumerService {
     private List<FulfillmentOrder> getXMLMessagesFromGCP() {
         List<FulfillmentOrder> fulfillmentOrderList = new ArrayList<>();
 
-        MessageReceiver receiver =
-                (PubsubMessage message, AckReplyConsumer consumer) -> message.getAttributesMap().forEach((key, value) -> {
-                    if (value.equalsIgnoreCase("xml")) {
-                        FulfillmentOrder fulfillmentOrder = saveXmlMessageInDB(new String((byte[]) Objects.requireNonNull(xmlAmqpTemplate.receiveAndConvert())));
-                        if (fulfillmentOrder != null) {
-                            fulfillmentOrderList.add(fulfillmentOrder);
-                            consumer.ack();
-                        }
-                    }
-                });
-
-        Subscriber subscriber = null;
-        ProjectSubscriptionName subscriptionName =
-                ProjectSubscriptionName.of(projectId, GCPConstants.SUBSCRIPTION_XML_ORDER);
-        try {
-            subscriber = Subscriber.newBuilder(subscriptionName, receiver).build();
-            subscriber.startAsync().awaitRunning();
-            subscriber.awaitTerminated(30, TimeUnit.SECONDS);
-        } catch (TimeoutException timeoutException) {
-            subscriber.stopAsync();
+        PubsubMessage message;
+        while ((message = pubSubTemplate.pullNext(GCPConstants.SUBSCRIPTION_XML_ORDER)) != null) {
+            String xmlMessage = message.getData().toStringUtf8();
+            FulfillmentOrder fulfillmentOrder = saveXmlMessageInDB(xmlMessage);
+            if (fulfillmentOrder != null) {
+                fulfillmentOrderList.add(fulfillmentOrder);
+            }
         }
+
+        System.out.println("No of xml messages read : " + fulfillmentOrderList.size());
         return fulfillmentOrderList;
     }
 
@@ -114,29 +97,16 @@ public class MOMessageConsumerServiceImpl implements MOMessageConsumerService {
     private List<OrderMessageJson> getJsonMessagesFromGCP() {
         List<OrderMessageJson> orderMessageJsonList = new ArrayList<>();
 
-        MessageReceiver receiver =
-                (PubsubMessage message, AckReplyConsumer consumer) -> message.getAttributesMap().forEach((key, value) -> {
-                    if (value.equalsIgnoreCase("json")) {
-                        OrderMessageJson orderMessageJson = saveJsonMessageInDB(message.getData().toString());
-                        if (orderMessageJson != null) {
-                            orderMessageJsonList.add(orderMessageJson);
-                            consumer.ack();
-                        }
-                    }
-                });
-
-        Subscriber subscriber = null;
-        ProjectSubscriptionName subscriptionName =
-                ProjectSubscriptionName.of(projectId, GCPConstants.SUBSCRIPTION_JSON_ORDER);
-        try {
-            subscriber = Subscriber.newBuilder(subscriptionName, receiver).build();
-            // Start the subscriber.
-            subscriber.startAsync().awaitRunning();
-            // Allow the subscriber to run for 30s unless an unrecoverable error occurs.
-            subscriber.awaitTerminated(30, TimeUnit.SECONDS);
-        } catch (TimeoutException timeoutException) {
-            subscriber.stopAsync();
+        PubsubMessage message;
+        while ((message = pubSubTemplate.pullNext(GCPConstants.SUBSCRIPTION_JSON_ORDER)) != null) {
+            String jsonMessage = message.getData().toStringUtf8();
+            OrderMessageJson orderMessageJson = saveJsonMessageInDB(jsonMessage);
+            if (orderMessageJson != null) {
+                orderMessageJsonList.add(orderMessageJson);
+            }
         }
+
+        System.out.println("No of json messages read : " + orderMessageJsonList.size());
         return orderMessageJsonList;
     }
 
