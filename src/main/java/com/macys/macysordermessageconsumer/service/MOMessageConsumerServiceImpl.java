@@ -22,6 +22,7 @@ import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.gcp.pubsub.core.PubSubTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -53,6 +54,9 @@ public class MOMessageConsumerServiceImpl implements MOMessageConsumerService {
 
     @Autowired
     AmqpTemplate jsonAmqpTemplate;
+
+    @Autowired
+    PubSubTemplate pubSubTemplate;
 
     @Value("${spring.cloud.gcp.project-id}")
     String projectId;
@@ -95,12 +99,10 @@ public class MOMessageConsumerServiceImpl implements MOMessageConsumerService {
 
         Subscriber subscriber = null;
         ProjectSubscriptionName subscriptionName =
-                ProjectSubscriptionName.of(projectId, GCPConstants.SUBSCRIPTION_ORDER_MSG);
+                ProjectSubscriptionName.of(projectId, GCPConstants.SUBSCRIPTION_XML_ORDER);
         try {
             subscriber = Subscriber.newBuilder(subscriptionName, receiver).build();
-            // Start the subscriber.
             subscriber.startAsync().awaitRunning();
-            // Allow the subscriber to run for 30s unless an unrecoverable error occurs.
             subscriber.awaitTerminated(30, TimeUnit.SECONDS);
         } catch (TimeoutException timeoutException) {
             subscriber.stopAsync();
@@ -115,7 +117,7 @@ public class MOMessageConsumerServiceImpl implements MOMessageConsumerService {
         MessageReceiver receiver =
                 (PubsubMessage message, AckReplyConsumer consumer) -> message.getAttributesMap().forEach((key, value) -> {
                     if (value.equalsIgnoreCase("json")) {
-                        OrderMessageJson orderMessageJson = saveJsonMessageInDB(new String((byte[]) Objects.requireNonNull(jsonAmqpTemplate.receiveAndConvert())));
+                        OrderMessageJson orderMessageJson = saveJsonMessageInDB(message.getData().toString());
                         if (orderMessageJson != null) {
                             orderMessageJsonList.add(orderMessageJson);
                             consumer.ack();
@@ -125,7 +127,7 @@ public class MOMessageConsumerServiceImpl implements MOMessageConsumerService {
 
         Subscriber subscriber = null;
         ProjectSubscriptionName subscriptionName =
-                ProjectSubscriptionName.of(projectId, GCPConstants.SUBSCRIPTION_ORDER_MSG);
+                ProjectSubscriptionName.of(projectId, GCPConstants.SUBSCRIPTION_JSON_ORDER);
         try {
             subscriber = Subscriber.newBuilder(subscriptionName, receiver).build();
             // Start the subscriber.

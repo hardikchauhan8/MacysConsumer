@@ -34,7 +34,7 @@ class MOMessageConsumerControllerTest {
     @MockBean
     MOMessageConsumerService service;
 
-    @Autowired
+    @MockBean
     MOMessageConsumerController controller;
 
     @Test
@@ -49,7 +49,8 @@ class MOMessageConsumerControllerTest {
 
         MvcResult result = mvc.perform(get("/macy/consumer/xml")
                         .contentType(MediaType.APPLICATION_XML_VALUE)
-                        .accept(MediaType.APPLICATION_XML_VALUE))
+                        .accept(MediaType.APPLICATION_XML_VALUE)
+                        .header("x-messaging-queue", "rabbitmq"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
@@ -63,7 +64,8 @@ class MOMessageConsumerControllerTest {
 
         MvcResult result = mvc.perform(get("/macy/consumer/json")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
-                        .accept(MediaType.APPLICATION_JSON_VALUE))
+                        .accept(MediaType.APPLICATION_JSON_VALUE)
+                        .header("x-messaging-queue", "gcp"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
