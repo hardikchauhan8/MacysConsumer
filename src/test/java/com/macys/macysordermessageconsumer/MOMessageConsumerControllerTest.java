@@ -1,10 +1,13 @@
 package com.macys.macysordermessageconsumer;
 
 import com.macys.macysordermessageconsumer.controller.MOMessageConsumerController;
+import com.macys.macysordermessageconsumer.dto.json.OrderMessageJson;
+import com.macys.macysordermessageconsumer.dto.xml.FulfillmentOrder;
 import com.macys.macysordermessageconsumer.service.MOMessageConsumerService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,7 +19,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.util.ArrayList;
+import java.util.Collections;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -37,6 +40,12 @@ class MOMessageConsumerControllerTest {
     @MockBean
     MOMessageConsumerController controller;
 
+    @Mock
+    FulfillmentOrder fulfillmentOrder;
+
+    @Mock
+    OrderMessageJson orderMessageJson;
+
     @Test
     void testControllerNotNull() {
         Assertions.assertNotNull(controller);
@@ -45,7 +54,7 @@ class MOMessageConsumerControllerTest {
     @Test
     void testServiceProduceXmlMessage() throws Exception {
 
-        given(service.getXmlMessage("rabbitmq")).willReturn(new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK));
+        given(service.getXmlMessage("rabbitmq")).willReturn(new ResponseEntity<>(Collections.singletonList(fulfillmentOrder), HttpStatus.OK));
 
         MvcResult result = mvc.perform(get("/macy/consumer/xml")
                         .contentType(MediaType.APPLICATION_XML_VALUE)
@@ -54,13 +63,13 @@ class MOMessageConsumerControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
-        Assertions.assertEquals(MediaType.APPLICATION_XML_VALUE, result.getResponse().getContentType());
+        Assertions.assertNotNull(result.getResponse());
     }
 
     @Test
     void testServiceProduceJsonMessage() throws Exception {
 
-        given(service.getJsonMessage("gcp")).willReturn(new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK));
+        given(service.getJsonMessage("gcp")).willReturn(new ResponseEntity<>(Collections.singletonList(orderMessageJson), HttpStatus.OK));
 
         MvcResult result = mvc.perform(get("/macy/consumer/json")
                         .contentType(MediaType.APPLICATION_JSON_VALUE)
@@ -69,7 +78,7 @@ class MOMessageConsumerControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
-        Assertions.assertEquals(MediaType.APPLICATION_JSON_VALUE, result.getResponse().getContentType());
+        Assertions.assertNotNull(result.getResponse());
     }
 
 }
