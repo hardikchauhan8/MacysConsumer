@@ -27,12 +27,12 @@ public class ConsumerConfig {
     }
 
     @Bean
-    Binding binding1(DirectExchange exchange) {
+    Binding jsonBinding(DirectExchange exchange) {
         return BindingBuilder.bind(jsonQueue()).to(exchange).with(jsonQueue().getName());
     }
 
     @Bean
-    Binding binding2(DirectExchange exchange) {
+    Binding xmlBinding(DirectExchange exchange) {
         return BindingBuilder.bind(xmlQueue()).to(exchange).with(xmlQueue().getName());
     }
 
